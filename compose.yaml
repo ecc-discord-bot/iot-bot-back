@@ -8,6 +8,7 @@ services:
             - 10007:10007
         volumes:
             - ./app:/root/app
+            - ./gin_goth/auth_grpc:/root/app/auth_grpc
         tty: true
         restart: always
         depends_on:
