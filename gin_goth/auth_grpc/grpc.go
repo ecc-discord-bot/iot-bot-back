@@ -1,4 +1,4 @@
-package client
+package auth_grpc
 
 import (
 	"errors"
@@ -6,14 +6,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	"gin_oauth/auth_grpc"
-
 	"google.golang.org/grpc"
 )
 
 var (
 	conn *grpc.ClientConn = nil
-	client auth_grpc.AuthServerClient = nil
+	client AuthServerClient = nil
 	isinit bool = false
 )
 
@@ -29,7 +27,7 @@ func Init(ServerUrl string) error {
 	conn = dial_conn
 
 	//クライアントとの接続
-	client = auth_grpc.NewAuthServerClient(conn)
+	client = NewAuthServerClient(conn)
 
 	isinit = true
 
@@ -43,7 +41,7 @@ func GetToken(token string,secret string) (string,error) {
 	}
 
 	//トークン取得
-	response, err := client.GetToken(context.Background(), &auth_grpc.Secret{
+	response, err := client.GetToken(context.Background(), &Secret{
 		Secret: secret,
 		Token:  token,
 	})

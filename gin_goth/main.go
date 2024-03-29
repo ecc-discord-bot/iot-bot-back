@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"gin_oauth/auth"
-	"gin_oauth/client"
+	"gin_oauth/auth_grpc"
 	"gin_oauth/transaction"
 
 	"github.com/gin-gonic/gin"
@@ -24,14 +24,13 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/markbates/goth/providers/discord"
-	
-	/*
-	"github.com/markbates/goth/providers/github"
-	"github.com/markbates/goth/providers/google"
-	"github.com/markbates/goth/providers/line"
-	"github.com/markbates/goth/providers/microsoftonline"
-	*/
 
+	/*
+		"github.com/markbates/goth/providers/github"
+		"github.com/markbates/goth/providers/google"
+		"github.com/markbates/goth/providers/line"
+		"github.com/markbates/goth/providers/microsoftonline"
+	*/
 
 	"github.com/wader/gormstore/v2"
 
@@ -106,7 +105,7 @@ func main() {
 	}
 
 	//TODO デバッグ用
-	client.Init("localhost:9000")
+	auth_grpc.Init("localhost:9000")
 
 	//ストア設定
 	store := gormstore.New(dbconn, []byte(key))
@@ -165,7 +164,7 @@ func main() {
 		}
 
 		//トークン取得
-		token,err := client.GetToken(token, os.Getenv("ClientSecret"))
+		token,err := auth_grpc.GetToken(token, os.Getenv("ClientSecret"))
 
 		//エラー処理
 		if err != nil {
