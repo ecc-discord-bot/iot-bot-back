@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	conn *grpc.ClientConn = nil
+	conn   *grpc.ClientConn = nil
 	client AuthServerClient = nil
-	isinit bool = false
+	isinit bool             = false
 )
 
 func Init(ServerUrl string) error {
@@ -34,7 +34,32 @@ func Init(ServerUrl string) error {
 	return nil
 }
 
-func GetToken(token string,secret string) (string,error) {
+// 認証する
+func Auth(token string) (User, error) {
+	//初期化されているか
+	if !isinit {
+		return User{}, errors.New("not init")
+	}
+
+	//認証する
+	result, err := client.Auth(context.Background(), &AuthToken{Token: token})
+
+	//エラー処理
+	if err != nil {
+		log.Printf("Error when calling SayHello: %s", err)
+		return User{}, err
+	}
+
+	//成功していない場合
+	if !result.Success {
+		return User{}, errors.New("auth error")
+	}
+
+	return *result.User, nil
+}
+
+// トークンを取得する
+func GetToken(token string, secret string) (string, error) {
 	//初期化されているか
 	if !isinit {
 		return "", errors.New("not init")
@@ -49,7 +74,7 @@ func GetToken(token string,secret string) (string,error) {
 	//エラー処理
 	if err != nil {
 		log.Printf("Error when calling SayHello: %s", err)
-		return "",err
+		return "", err
 	}
 
 	//成功していない場合
