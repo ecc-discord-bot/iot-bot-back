@@ -40,7 +40,13 @@ func Auth() gin.HandlerFunc {
 		}
 
 		//トークン取得
-		token := ctx.Request.Header.Get("token")
+		token,err := GetToken(ctx)
+
+		//エラー処理
+		if err != nil {
+			ctx.Next()
+			return
+		}
 
 		//トークンが存在するか
 		if token == "" {
@@ -63,4 +69,11 @@ func Auth() gin.HandlerFunc {
 
 		ctx.Next()
 	}
+}
+
+func GetToken(ctx *gin.Context) (string,error) {
+	//token := ctx.Request.Header.Get("token")
+	//return token,nil
+
+	return ctx.Cookie("token")
 }

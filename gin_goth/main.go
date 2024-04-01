@@ -178,7 +178,7 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
 	})
 
-	router.GET("/auth/:provider", func(ctx *gin.Context) {
+	router.GET("/:provider", func(ctx *gin.Context) {
 		_, err := set_redirect_url(ctx)
 
 		//エラー処理
@@ -214,7 +214,7 @@ func main() {
 		ctx.File("./Secret/microsoft-identity-association.json")
 	})
 
-	router.GET("/auth/:provider/callback", func(ctx *gin.Context) {
+	router.GET("/:provider/callback", func(ctx *gin.Context) {
 		//プロバイダ取得
 		provider := ctx.Param("provider")
 		//コンテキスト差し替え
@@ -328,33 +328,7 @@ func main() {
 		ctx.Redirect(303, get_redirect_url(ctx) + "?token=" + tokendata.Token)
 	})
 
-	router.POST("/auth/logout", func(ctx *gin.Context) {
-		//認証済み判定
-		authed := ctx.MustGet("authed")
-
-		//認証済みか
-		if !authed.(bool) {
-			//認証されていなかったら
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "not authenticated"})
-			return
-		}
-
-		//ログアウト処理
-		err := Logout(ctx)
-
-		//エラー処理
-		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-
-		//成功メッセージ
-		ctx.JSON(200, gin.H{
-			"message": "success",
-		})
-	})
-
-	router.POST("/auth/disable_session", func(ctx *gin.Context) {
+	router.POST("/disable_session", func(ctx *gin.Context) {
 		//認証済み判定
 		authed := ctx.MustGet("authed")
 
@@ -403,7 +377,7 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
-	router.POST("/auth/getuser", func(ctx *gin.Context) {
+	router.POST("/getuser", func(ctx *gin.Context) {
 		//認証済み判定
 		authed := ctx.MustGet("authed")
 
@@ -429,7 +403,7 @@ func main() {
 		})
 	})
 
-	router.POST("/auth/sessions", func(ctx *gin.Context) {
+	router.POST("/sessions", func(ctx *gin.Context) {
 		//認証済み判定
 		authed := ctx.MustGet("authed")
 
@@ -477,7 +451,7 @@ func main() {
 		ctx.JSON(200, gin.H{"sessions": results})
 	})
 
-	router.RunTLS(":3000", "./keys/server.crt", "./keys/server.key")
+	router.RunTLS(":3011", "./keys/server.crt", "./keys/server.key")
 
 }
 
