@@ -38,17 +38,26 @@ func (db *DB) new(gormConnection *gorm.DB) UserI {
 }
 
 func (db *DB) GetUser(discord_id string) (User, error) {
-	return db.db.First(&User{}, "discord_id = ?", discord_id)
+	var user User
+	db.db.First(&user, "discord_id = ?", discord_id)
+	return user, nil
 }
 
 func (db *DB) GetUsers() ([]User, error) {
-	return []User{}, nil
+	var users = []User{}
+	res := db.db.Find(&users)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return users, nil
 }
 
 func (db *DB) CreateUser(user User) error {
+	db.db.Create(&user)
 	return nil
 }
 
-func (db *DB) Init() error {
+func (db *DB) UpdateUser(user User) error {
+	db.db.Model(&user)
 	return nil
 }
