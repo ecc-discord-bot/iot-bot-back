@@ -28,8 +28,8 @@ func Init() error {
 func Auth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		//情報初期化
-		ctx.Set("auth",false)
-		ctx.Set("user",auth_grpc.User{})
+		ctx.Set("auth", false)
+		ctx.Set("user", auth_grpc.User{})
 
 		//初期化されているか
 		if !isinit {
@@ -48,7 +48,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		//認証する
-		user,err := auth_grpc.Auth(token)
+		user, err := auth_grpc.Auth(token)
 
 		//エラー処理
 		if err != nil {
@@ -56,8 +56,8 @@ func Auth() gin.HandlerFunc {
 		}
 
 		//認証成功
-		ctx.Set("auth",true)
-		ctx.Set("user",&user)
+		ctx.Set("auth", true)
+		ctx.Set("user", &user)
 
 		ctx.Next()
 	}

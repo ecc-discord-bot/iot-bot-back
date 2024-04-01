@@ -108,6 +108,25 @@ func (auther *Auth) Refresh(
 	return &auth_grpc.RefreshResult{Success: true, Token: new_token}, nil
 }
 
+//ログアウト関数
+func (auther *Auth) Logout(
+	ctx context.Context,
+	token *auth_grpc.AuthToken,
+) (bool, error) {
+	//トークンを無効化する
+	err := auth.DisableToken(token.Token)
+
+	//エラー処理
+	if err != nil {
+		log.Println(err)
+		//失敗した場合エラー返す
+		return false, err
+	}
+
+	//成功した場合
+	return true, nil
+}
+
 func (auther *Auth) GetToken(
 	ctx context.Context,
 	data *auth_grpc.Secret,

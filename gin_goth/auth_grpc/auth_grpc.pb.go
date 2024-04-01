@@ -22,6 +22,7 @@ const (
 	AuthServer_Auth_FullMethodName     = "/auth.AuthServer/Auth"
 	AuthServer_GetToken_FullMethodName = "/auth.AuthServer/GetToken"
 	AuthServer_Refresh_FullMethodName  = "/auth.AuthServer/Refresh"
+	AuthServer_Logout_FullMethodName   = "/auth.AuthServer/Logout"
 )
 
 // AuthServerClient is the client API for AuthServer service.
@@ -31,6 +32,7 @@ type AuthServerClient interface {
 	Auth(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*AuthResult, error)
 	GetToken(ctx context.Context, in *Secret, opts ...grpc.CallOption) (*TokenData, error)
 	Refresh(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*RefreshResult, error)
+	Logout(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*Result, error)
 }
 
 type authServerClient struct {
@@ -68,6 +70,15 @@ func (c *authServerClient) Refresh(ctx context.Context, in *AuthToken, opts ...g
 	return out, nil
 }
 
+func (c *authServerClient) Logout(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*Result, error) {
+	out := new(Result)
+	err := c.cc.Invoke(ctx, AuthServer_Logout_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServerServer is the server API for AuthServer service.
 // All implementations should embed UnimplementedAuthServerServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type AuthServerServer interface {
 	Auth(context.Context, *AuthToken) (*AuthResult, error)
 	GetToken(context.Context, *Secret) (*TokenData, error)
 	Refresh(context.Context, *AuthToken) (*RefreshResult, error)
+	Logout(context.Context, *AuthToken) (*Result, error)
 }
 
 // UnimplementedAuthServerServer should be embedded to have forward compatible implementations.
@@ -89,6 +101,9 @@ func (UnimplementedAuthServerServer) GetToken(context.Context, *Secret) (*TokenD
 }
 func (UnimplementedAuthServerServer) Refresh(context.Context, *AuthToken) (*RefreshResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthServerServer) Logout(context.Context, *AuthToken) (*Result, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
 
 // UnsafeAuthServerServer may be embedded to opt out of forward compatibility for this service.
@@ -156,6 +171,24 @@ func _AuthServer_Refresh_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthServer_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServerServer).Logout(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthServer_Logout_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServerServer).Logout(ctx, req.(*AuthToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthServer_ServiceDesc is the grpc.ServiceDesc for AuthServer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -174,6 +207,10 @@ var AuthServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Refresh",
 			Handler:    _AuthServer_Refresh_Handler,
+		},
+		{
+			MethodName: "Logout",
+			Handler:    _AuthServer_Logout_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

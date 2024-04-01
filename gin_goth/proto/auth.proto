@@ -66,8 +66,13 @@ message TokenData {
 	bool success = 2;
 }
 
+message Result {
+	bool success = 1;
+}
+
 service AuthServer {
 	rpc Auth(AuthToken) returns (AuthResult) {}
     rpc GetToken(Secret) returns (TokenData) {}
 	rpc Refresh(AuthToken) returns (RefreshResult) {}
+	rpc Logout(AuthToken) returns (Result) {}
 }

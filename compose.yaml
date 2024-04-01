@@ -46,6 +46,6 @@ services:
             - ./nginx/keys:/etc/nginx/keys
             - ./nginx/statics:/etc/nginx/static/statics
         tty: true
-        
         extra_hosts:
             - host.docker.internal:host-gateway
+            
