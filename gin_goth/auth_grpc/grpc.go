@@ -84,3 +84,28 @@ func GetToken(token string, secret string) (string, error) {
 
 	return response.Token, nil
 }
+
+//ログアウト
+func Logout(token string) error {
+	//初期化されているか
+	if !isinit {
+		return nil
+	}
+
+	//トークンを無効化する
+	result,err := client.Logout(context.Background(), &AuthToken{Token: token})
+
+	//エラー処理
+	if err != nil {
+		log.Printf("Error when calling SayHello: %s", err)
+		return err
+	}
+
+	//成功していない場合
+	if !result.Success {
+		log.Printf("Error when calling SayHello: %s", err)
+		return errors.New("logout error")
+	}
+
+	return nil
+}	

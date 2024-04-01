@@ -78,5 +78,35 @@ func main() {
 		log.Println(result)
 	})
 
-	router.Run(":3005")
+	router.POST("/logout", func(ctx *gin.Context) {
+		//認証成功しているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "no auth",
+			})
+			return
+		}
+
+		//トークンを取得する
+		token := ctx.GetString("token")
+
+		//ログアウト
+		err := auth_grpc.Logout(token)
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"message": "success",
+		})
+	})
+
+	router.Run(":3001")
 }
