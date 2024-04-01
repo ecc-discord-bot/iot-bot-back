@@ -13,6 +13,8 @@ services:
         restart: always
         depends_on:
             - redis
+        networks:
+            - database-net
 
     gin_goth:
         container_name: auth_Server
@@ -51,9 +53,7 @@ services:
 
     mysql:
         container_name: mysql
-        image: mysql:5.7
-        ports:
-            - "3306:3306"
+        image: mysql:8.3
         environment:
             MYSQL_ROOT_PASSWORD: root
             MYSQL_DATABASE: test
@@ -63,3 +63,9 @@ services:
             - ./db/data:/var/lib/mysql
             - ./db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
         restart: always
+        networks:
+            - database-net
+
+networks:
+  database-net:
+    driver: bridge
