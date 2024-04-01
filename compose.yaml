@@ -5,7 +5,7 @@ services:
         image: golang:1.20.13-bullseye
         build: ./app
         ports:
-            - 10007:10007
+            - 3001:3001
         volumes:
             - ./app:/root/app
             - ./gin_goth/auth_grpc:/root/app/auth_grpc
@@ -13,40 +13,25 @@ services:
         restart: always
         depends_on:
             - redis
-            - postgresql
 
     gin_goth:
         container_name: auth_Server
         image: golang:1.20.13-bullseye
         build: ./gin_goth
         ports:
-            - 10005:10005
+            - 3000:3000
         volumes:
             - ./gin_goth:/root/gin_goth
         tty: true
         restart: always
         depends_on:
             - redis
-            - postgresql
 
     redis:
         container_name: redis
         image: "redis:latest"
         ports:
             - "6379:6379"
-        restart: always
-
-    postgresql:
-        container_name: postregres
-        image: postgres:12.18-bullseye
-        environment:
-            - TZ=Asia/Tokyo
-        ports:
-            - "15432:5432"
-        env_file:
-            - .env
-        volumes:
-            - ./postgresql:/var/lib/postgresql/data
         restart: always
 
     nginx:

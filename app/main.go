@@ -3,6 +3,7 @@ package main
 import (
 	"app/auth_grpc"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -77,5 +78,5 @@ func main() {
 		log.Println(result)
 	})
 
-	router.Run(":5000")
+	router.Run(":3001")
 }
