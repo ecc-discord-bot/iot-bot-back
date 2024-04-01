@@ -112,7 +112,7 @@ func (auther *Auth) Refresh(
 func (auther *Auth) Logout(
 	ctx context.Context,
 	token *auth_grpc.AuthToken,
-) (bool, error) {
+) (*auth_grpc.Result, error) {
 	//トークンを無効化する
 	err := auth.DisableToken(token.Token)
 
@@ -120,11 +120,11 @@ func (auther *Auth) Logout(
 	if err != nil {
 		log.Println(err)
 		//失敗した場合エラー返す
-		return false, err
+		return &auth_grpc.Result{Success: false}, err
 	}
 
 	//成功した場合
-	return true, nil
+	return &auth_grpc.Result{Success: true}, nil
 }
 
 func (auther *Auth) GetToken(

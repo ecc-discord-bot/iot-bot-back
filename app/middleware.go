@@ -30,6 +30,7 @@ func Auth() gin.HandlerFunc {
 		//情報初期化
 		ctx.Set("auth", false)
 		ctx.Set("user", auth_grpc.User{})
+		ctx.Set("token", "")
 
 		//初期化されているか
 		if !isinit {
@@ -58,6 +59,7 @@ func Auth() gin.HandlerFunc {
 		//認証成功
 		ctx.Set("auth", true)
 		ctx.Set("user", &user)
+		ctx.Set("token", token)
 
 		ctx.Next()
 	}
