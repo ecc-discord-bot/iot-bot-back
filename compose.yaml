@@ -5,7 +5,7 @@ services:
         image: golang:1.20.13-bullseye
         build: ./app
         ports:
-            - 3001:3001
+            - 3005:3001
         volumes:
             - ./app:/root/app
             - ./gin_goth/auth_grpc:/root/app/auth_grpc
