@@ -175,6 +175,64 @@ func main() {
 
 	//outlook のログインが終わったとき
 	router.GET("/allok", func(ctx *gin.Context) {
+		//ログインしているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "no auth",
+			})
+			return
+		}
+
+		//ユーザーを取得する
+		data,exits := ctx.Get("user")
+
+		//エラー処理
+		if !exits {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//ユーザー取得
+		user := data.(auth_grpc.User)
+		log.Println(user.Name)
+
+		ctx.JSON(200, gin.H{
+			"message": "success",
+		})
+	})
+
+	//ログアウト エンドポイント
+	router.GET("/logout", func(ctx *gin.Context) {
+		//認証成功しているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "no auth",
+			})
+			return
+		}
+
+		//トークンを取得する
+		token := ctx.GetString("token")
+
+		//ログアウト
+		err := auth_grpc.Logout(token)
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//トークン削除
+		ctx.SetCookie("token", "", -1, "/", "", true, true)
 		ctx.JSON(200, gin.H{
 			"message": "success",
 		})

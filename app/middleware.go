@@ -64,7 +64,7 @@ func Auth() gin.HandlerFunc {
 
 		//認証成功
 		ctx.Set("auth", true)
-		ctx.Set("user", &user)
+		ctx.Set("user", user)
 		ctx.Set("token", token)
 
 		ctx.Next()
