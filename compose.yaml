@@ -46,6 +46,20 @@ services:
             - ./nginx/keys:/etc/nginx/keys
             - ./nginx/statics:/etc/nginx/static/statics
         tty: true
-        
         extra_hosts:
             - host.docker.internal:host-gateway
+
+    mysql:
+        container_name: mysql
+        image: mysql:5.7
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: test
+            MYSQL_USER: test
+            MYSQL_PASSWORD: test
+        volumes:
+            - ./db/data:/var/lib/mysql
+            - ./db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+        restart: always
