@@ -1,11 +1,10 @@
 package db
 
 type User struct {
-	discord_id  string `gorm:"primary_key"`
-	students_id string
-	name        string
-	class       string
-	year        string
-	is_paid     bool
-	is_agreed   bool
+	Discord_id  string `gorm:"primary_key"`
+	Students_id string
+	Name        string
+	Class       string
+	Is_paid     bool
+	Is_agreed   bool
 }
