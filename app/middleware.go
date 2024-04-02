@@ -10,7 +10,7 @@ var (
 	isinit = false
 )
 
-func Init() error {
+func Middleware_Init() error {
 	//grpcの初期化
 	err := auth_grpc.Init("auth_Server:9000")
 

@@ -59,7 +59,7 @@ func (auther *Auth) Auth(
 		//失敗した場合エラー返す
 		return &auth_grpc.AuthResult{Success: false}, err
 	}
-
+	
 	//認証結果
 	result := auth_grpc.AuthResult{
 		Success: true,
