@@ -205,6 +205,11 @@ func main() {
 		})
 	})
 
+	//ログインエンドポイント
+	router.GET("/login", func(ctx *gin.Context) {
+		ctx.Redirect(301, "/auth/discord?redirect_url=/app/")
+	})
+
 	//ログアウト エンドポイント
 	router.GET("/logout", func(ctx *gin.Context) {
 		//認証成功しているか
