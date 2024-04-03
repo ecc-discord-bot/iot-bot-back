@@ -10,6 +10,9 @@
     <button id="agree_button">
         同意する
     </button>
+    <button id="refresh_button">
+        更新する
+    </button>
 
     <script>
         document.getElementById("agree_button").addEventListener("click", async function() {
@@ -22,6 +25,24 @@
             })
 
             const res = await req.json()
+
+            console.log(res);
+        })
+
+        document.getElementById("refresh_button").addEventListener("click", async function() {
+            const req = await fetch("/app/refresh", {
+                method: "POST",
+            })
+
+            const res = await req.json()
+
+            console.log(res);
+
+            const req2 = await fetch("/app/refreshs", {
+                method: "POST",
+            })
+
+            const res2 = await req2.json()
 
             console.log(res);
         })

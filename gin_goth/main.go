@@ -269,6 +269,7 @@ func main() {
 			}
 
 		} else if err != nil {
+			//エラー処理
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		} else {
@@ -298,7 +299,7 @@ func main() {
 		UserAgent := ctx.GetHeader("User-Agent")
 
 		//トークン生成
-		token, err := auth.GenToken(hash_data_str, UserAgent)
+		token, err := auth.GenToken(hash_data_str, UserAgent,"")
 
 		//エラー処理
 		if err != nil {

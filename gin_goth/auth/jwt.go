@@ -20,7 +20,7 @@ func jwt_init() error {
 	return nil
 }
 
-func get_exptime() time.Time {
+func Get_Exptime() time.Time {
 	//現在時刻
 	now_time := time.Now()
 
@@ -57,16 +57,7 @@ func UpdateToken(tokenid string,UserAgent string) (string,error) {
 	}
 
 	//新しいトークンを発行する
-	new_token,err := GenToken(bindid,UserAgent)
-
-	//エラー処理
-	if err != nil {
-		log.Println(err)
-		return "",err
-	}
-
-	//既存のトークン無効化
-	err = delete_token(tokenid)
+	new_token,err := GenToken(bindid,UserAgent,tokenid)
 
 	//エラー処理
 	if err != nil {
@@ -112,8 +103,8 @@ func Valid_token(tokenid string) (string,error) {
 	return get_data.BindId, nil
 }
 
-//トークン登録
-func register_token(bindid string, tokenid string,exptime time.Time,UserAgent string) error {
+//有効期限更新
+func UpdateExptime(tokenid string,exptime time.Time) error {
 	//DB接続
 	dbconn,err := GetDB()
 
@@ -122,12 +113,54 @@ func register_token(bindid string, tokenid string,exptime time.Time,UserAgent st
 		return err
 	}
 
+	get_data := &TokenData{}
+	//トークン検証
+	result := dbconn.Where(&TokenData{
+		TokenId: tokenid,
+	}).First(get_data)
+
+	//エラー処理
+	if result.Error != nil {
+		return result.Error
+	}
+
+	//トークン更新
+	get_data.Exptime = exptime
+
+	//保存
+	result = dbconn.Save(get_data)
+
+	//エラー処理
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+//トークン登録
+func register_token(bindid string, tokenid string,exptime time.Time,UserAgent string,oldid string) error {
+	//DB接続
+	dbconn,err := GetDB()
+
+	//エラー処理
+	if err != nil {
+		return err
+	}
+
+	//古いトークンがある場合有効期限を5分にする
+	if oldid != "" {
+		//現在時刻 + 5分
+		exptime =  time.Now().Add(time.Minute * 5)
+	}
+
 	//トークン登録
 	result := dbconn.Create(&TokenData{
 		BindId: bindid,
 		TokenId: tokenid,
 		Exptime: exptime,
 		UserAgent: UserAgent,
+		OldID: oldid,
 	})
 
 	//エラー処理
@@ -139,7 +172,7 @@ func register_token(bindid string, tokenid string,exptime time.Time,UserAgent st
 }
 
 //トークン削除
-func delete_token(tokenid string) error {
+func Delete_token(tokenid string) error {
 	//DB接続
 	dbconn,err := GetDB()
 
@@ -163,7 +196,7 @@ func delete_token(tokenid string) error {
 
 
 //IDに関連したトークン生成
-func GenToken(BindId string,UserAgent string) (string, error) {
+func GenToken(BindId string,UserAgent string,oldtokenid string) (string, error) {
 	/*
 	//IDからトークン取得
 	already_tokenid,err := get_tokenid(BindId)
@@ -184,7 +217,7 @@ func GenToken(BindId string,UserAgent string) (string, error) {
 	tokenid := genid()
 
 	//有効期限取得
-	after_time := get_exptime()
+	after_time := Get_Exptime()
 
 	//トークンデータ
 	token_claims := jwt.MapClaims{
@@ -204,7 +237,7 @@ func GenToken(BindId string,UserAgent string) (string, error) {
 	}
 
 	//トークン登録
-	err = register_token(BindId, tokenid,after_time,UserAgent)
+	err = register_token(BindId, tokenid,after_time,UserAgent,oldtokenid)
 
 	//エラー処理
 	if err != nil {
@@ -293,7 +326,7 @@ func DisableToken(tokenString string) (error) {
 		_ = bindid
 
 		//トークン無効化
-		err = delete_token(claims["tokenid"].(string))
+		err = Delete_token(claims["tokenid"].(string))
 
 		//エラー処理
 		if err != nil {

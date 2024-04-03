@@ -8,10 +8,11 @@ import (
 )
 
 type TokenData struct {
-	TokenId string	`gorm:"primaryKey"`
-	BindId  string 
-	Exptime time.Time
+	TokenId   string `gorm:"primaryKey"`
+	BindId    string
+	Exptime   time.Time
 	UserAgent string
+	OldID     string
 }
 
 var (

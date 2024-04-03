@@ -96,7 +96,7 @@ func (auther *Auth) Refresh(
 	}
 
 	//新しいトークン発行
-	new_token, err := auth.UpdateToken(token_data.TokenId, "")
+	new_token, err := auth.UpdateToken(token_data.TokenId, token.UserAgent)
 
 	//エラー処理
 	if err != nil {
@@ -106,6 +106,48 @@ func (auther *Auth) Refresh(
 	}
 
 	return &auth_grpc.RefreshResult{Success: true, Token: new_token}, nil
+}
+
+func (auther *Auth) Submit(
+	ctx context.Context,
+	token *auth_grpc.AuthToken,
+) (*auth_grpc.RefreshResult, error) {
+	//トークン検証
+	token_data, err := auth.ParseToken(token.Token)
+
+	//エラー処理
+	if err != nil {
+		log.Println(err)
+		//失敗した場合エラー返す
+		return &auth_grpc.RefreshResult{Success: false}, err
+	}
+
+	if token_data.OldID == "" {
+		//無効なトークンエラー
+		return &auth_grpc.RefreshResult{Success: false}, errors.New("invalid token")
+	}
+
+	//古いトークンを無効化する
+	err = auth.Delete_token(token_data.OldID)
+
+	//エラー処理
+	if err != nil {
+		log.Println(err)
+		//失敗した場合エラー返す
+		return &auth_grpc.RefreshResult{Success: false}, err
+	}
+
+	//有効期限更新 (１ヶ月後)
+	err = auth.UpdateExptime(token_data.TokenId,auth.Get_Exptime())
+
+	//エラー処理
+	if err != nil {
+		log.Println(err)
+		//失敗した場合エラー返す
+		return &auth_grpc.RefreshResult{Success: false}, err
+	}
+
+	return &auth_grpc.RefreshResult{Success: true}, nil
 }
 
 //ログアウト関数

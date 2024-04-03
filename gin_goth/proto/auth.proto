@@ -74,5 +74,6 @@ service AuthServer {
 	rpc Auth(AuthToken) returns (AuthResult) {}
     rpc GetToken(Secret) returns (TokenData) {}
 	rpc Refresh(AuthToken) returns (RefreshResult) {}
+	rpc Submit(AuthToken) returns (RefreshResult) {}
 	rpc Logout(AuthToken) returns (Result) {}
 }

@@ -109,3 +109,56 @@ func Logout(token string) error {
 
 	return nil
 }	
+
+//トークンを更新する
+func Refresh(token string,UserAgent string) (string, error) {
+	//初期化されているか
+	if !isinit {
+		return "", errors.New("not init")
+	}
+
+	//トークン取得
+	response, err := client.Refresh(context.Background(),&AuthToken{
+		Token: token,
+		UserAgent: UserAgent,
+	})
+
+	//エラー処理
+	if err != nil {
+		log.Printf("Error when calling SayHello: %s", err)
+		return "", err
+	}
+
+	//成功していない場合
+	if !response.Success {
+		return "", errors.New("refresh token error")
+	}
+
+	return response.Token, nil
+}
+
+//トークンを更新する
+func Submit_Refresh(token string) error {
+	//初期化されているか
+	if !isinit {
+		return errors.New("not init")
+	}
+
+	//トークン取得
+	response, err := client.Submit(context.Background(),&AuthToken{
+		Token: token,
+	})
+
+	//エラー処理
+	if err != nil {
+		log.Printf("Error when calling SayHello: %s", err)
+		return err
+	}
+
+	//成功していない場合
+	if !response.Success {
+		return errors.New("refresh token error")
+	}
+
+	return nil
+}

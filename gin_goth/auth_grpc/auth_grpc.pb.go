@@ -22,6 +22,7 @@ const (
 	AuthServer_Auth_FullMethodName     = "/auth.AuthServer/Auth"
 	AuthServer_GetToken_FullMethodName = "/auth.AuthServer/GetToken"
 	AuthServer_Refresh_FullMethodName  = "/auth.AuthServer/Refresh"
+	AuthServer_Submit_FullMethodName   = "/auth.AuthServer/Submit"
 	AuthServer_Logout_FullMethodName   = "/auth.AuthServer/Logout"
 )
 
@@ -32,6 +33,7 @@ type AuthServerClient interface {
 	Auth(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*AuthResult, error)
 	GetToken(ctx context.Context, in *Secret, opts ...grpc.CallOption) (*TokenData, error)
 	Refresh(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*RefreshResult, error)
+	Submit(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*RefreshResult, error)
 	Logout(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*Result, error)
 }
 
@@ -70,6 +72,15 @@ func (c *authServerClient) Refresh(ctx context.Context, in *AuthToken, opts ...g
 	return out, nil
 }
 
+func (c *authServerClient) Submit(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*RefreshResult, error) {
+	out := new(RefreshResult)
+	err := c.cc.Invoke(ctx, AuthServer_Submit_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServerClient) Logout(ctx context.Context, in *AuthToken, opts ...grpc.CallOption) (*Result, error) {
 	out := new(Result)
 	err := c.cc.Invoke(ctx, AuthServer_Logout_FullMethodName, in, out, opts...)
@@ -86,6 +97,7 @@ type AuthServerServer interface {
 	Auth(context.Context, *AuthToken) (*AuthResult, error)
 	GetToken(context.Context, *Secret) (*TokenData, error)
 	Refresh(context.Context, *AuthToken) (*RefreshResult, error)
+	Submit(context.Context, *AuthToken) (*RefreshResult, error)
 	Logout(context.Context, *AuthToken) (*Result, error)
 }
 
@@ -101,6 +113,9 @@ func (UnimplementedAuthServerServer) GetToken(context.Context, *Secret) (*TokenD
 }
 func (UnimplementedAuthServerServer) Refresh(context.Context, *AuthToken) (*RefreshResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthServerServer) Submit(context.Context, *AuthToken) (*RefreshResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Submit not implemented")
 }
 func (UnimplementedAuthServerServer) Logout(context.Context, *AuthToken) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
@@ -171,6 +186,24 @@ func _AuthServer_Refresh_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthServer_Submit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthToken)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServerServer).Submit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthServer_Submit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServerServer).Submit(ctx, req.(*AuthToken))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthServer_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AuthToken)
 	if err := dec(in); err != nil {
@@ -207,6 +240,10 @@ var AuthServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Refresh",
 			Handler:    _AuthServer_Refresh_Handler,
+		},
+		{
+			MethodName: "Submit",
+			Handler:    _AuthServer_Submit_Handler,
 		},
 		{
 			MethodName: "Logout",

@@ -83,6 +83,68 @@ func main() {
 		ctx.Redirect(301, "/app/bind")
 	})
 
+	//トークン更新用エンドポイント
+	router.POST("/refresh", func(ctx *gin.Context) {
+		//認証されているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "not auth",
+			})
+			return
+		}
+
+		//ユーザーエージェント取得
+		UserAgent := ctx.GetHeader("User-Agent")
+		//トークンを取得する
+		new_token,err := auth_grpc.Refresh(ctx.GetString("token"),UserAgent)
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//cookie設定
+		ctx.SetSameSite(http.SameSiteLaxMode)
+		ctx.SetCookie("token", new_token, 2592000, "/", "", true, true)
+
+		ctx.JSON(200, gin.H{
+			"message" : "ok",
+		})
+	})
+
+	//トークン更新確定エンドポイント
+	router.POST("/refreshs", func(ctx *gin.Context) {
+		//認証されているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "not auth",
+			})
+			return
+		}
+
+		//トークンを取得する
+		err := auth_grpc.Submit_Refresh(ctx.GetString("token"))
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		ctx.JSON(200, gin.H{
+			"message" : "ok",
+		})
+	})
+
 	//メールアドレスが使用できないとき
 	router.GET("/fail_mail", func(ctx *gin.Context) {
 		ctx.String(500, "fail mail address")
