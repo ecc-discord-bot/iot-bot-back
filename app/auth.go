@@ -79,7 +79,7 @@ func Outlook(ctx *gin.Context) {
 	} else {
 		//ユーザーを更新する
 		usr.Name = user.Name
-		usr.Students_id = user.Email
+		usr.Students_id = strings.TrimSuffix(user.Email, "@ecc.ac.jp")
 		
 		err = dbconn.UpdateUser(usr)
 

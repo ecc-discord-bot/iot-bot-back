@@ -46,6 +46,21 @@
 
             console.log(res);
         })
+
+        async function main() {
+            const req = await fetch("/app/userinfo", {
+                method: "GET",
+            })
+
+            const res = await req.json()
+
+            if (req.status != 200) {
+                return
+            }
+            
+        }
+
+        main()
     </script>
 </body>
 </html>

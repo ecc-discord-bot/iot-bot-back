@@ -378,32 +378,6 @@ func main() {
 		ctx.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
-	router.POST("/getuser", func(ctx *gin.Context) {
-		//認証済み判定
-		authed := ctx.MustGet("authed")
-
-		//認証済みか
-		if !authed.(bool) {
-			//認証されていなかったら
-			ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
-			return
-		}
-
-		user := ctx.MustGet("user").(auth.User)
-
-		ctx.JSON(200, gin.H{
-			"id":       user.UserID,
-			"name":     user.Name,
-			"icon":     user.AvatarURL,
-			"mail":     user.Email,
-			"provider": user.Provider,
-
-			"first_name": user.FirstName,
-			"nick_name":  user.NickName,
-			"last_name":  user.LastName,
-		})
-	})
-
 	router.POST("/sessions", func(ctx *gin.Context) {
 		//認証済み判定
 		authed := ctx.MustGet("authed")

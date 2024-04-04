@@ -21,3 +21,5 @@ server.key
 
 /nginx/statics/build
 gin_goth/config.json
+
+/app/test

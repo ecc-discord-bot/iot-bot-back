@@ -37,7 +37,8 @@ func Cleanup_OldToken(duration time.Duration) {
 		//有効期限が切れたトークンを削除する
 		result := dbconn.Where("exptime <= ?",now_time).Delete(TokenData{})
 
-		log.Println(result.RowsAffected)
+		//log.Println(result.RowsAffected)
+		_ = result
 
 		//指定した期間まつ
 		time.Sleep(duration)

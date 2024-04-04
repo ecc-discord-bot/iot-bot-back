@@ -33,14 +33,15 @@ func main() {
 	//セッション初期化
 	session_store := gin_cookie.NewStore([]byte(key))
 	router.Use(gin_sessions.Sessions("csrf_session", session_store))
+
 	/*
-		router.Use(gin_csrf.Middleware(gin_csrf.Options{
-			Secret: key,
-			ErrorFunc: func(ctx *gin.Context) {
-				ctx.String(400, "CSRF token mismatch")
-				ctx.Abort()
-			},
-		}))
+	router.Use(gin_csrf.Middleware(gin_csrf.Options{
+		Secret: key,
+		ErrorFunc: func(ctx *gin.Context) {
+			ctx.String(400, "CSRF token mismatch")
+			ctx.Abort()
+		},
+	}))
 	*/
 
 	//ここまで
@@ -74,9 +75,6 @@ func main() {
 			return
 		}
 
-		//csrf設定
-		//gin_csrf.GetToken(ctx)
-
 		ctx.SetSameSite(http.SameSiteLaxMode)
 		ctx.SetCookie("token", result, 2592000, "/", "", true, true)
 
@@ -97,7 +95,7 @@ func main() {
 		//ユーザーエージェント取得
 		UserAgent := ctx.GetHeader("User-Agent")
 		//トークンを取得する
-		new_token,err := auth_grpc.Refresh(ctx.GetString("token"),UserAgent)
+		new_token, err := auth_grpc.Refresh(ctx.GetString("token"), UserAgent)
 
 		//エラー処理
 		if err != nil {
@@ -113,7 +111,7 @@ func main() {
 		ctx.SetCookie("token", new_token, 2592000, "/", "", true, true)
 
 		ctx.JSON(200, gin.H{
-			"message" : "ok",
+			"message": "ok",
 		})
 	})
 
@@ -141,7 +139,7 @@ func main() {
 		}
 
 		ctx.JSON(200, gin.H{
-			"message" : "ok",
+			"message": "ok",
 		})
 	})
 
@@ -175,10 +173,14 @@ func main() {
 			return
 		}
 
-		//ユーザー取得
-		dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+		_ = data
 
-		ctx.HTML(http.StatusOK, "index.html", gin.H{})
+		//同意画面にリダイレクト
+		ctx.Redirect(301, "/terms")
+		//ユーザー取得
+		//dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+
+		//ctx.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 
 	//ログインエンドポイント
@@ -228,6 +230,47 @@ func main() {
 		gothic.BeginAuthHandler(ctx.Writer, ctx.Request)
 	})
 
+	//ユーザ情報取得
+	router.GET("/userinfo", func(ctx *gin.Context) {
+		//認証されているか
+		if !ctx.GetBool("auth") {
+			//認証していない場合
+			ctx.JSON(401, gin.H{
+				"message": "no auth",
+			})
+			return
+		}
+
+		//ユーザーを取得する
+		data, exits := ctx.Get("user")
+
+		//エラー処理
+		if !exits {
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//ユーザー取得
+		user,err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		log.Println(user)
+		ctx.JSON(200, gin.H{
+			"message": "ok",
+			"user": user,
+		})
+	})
+
 	router.POST("/logout", func(ctx *gin.Context) {
 		//認証成功しているか
 		if !ctx.GetBool("auth") {
@@ -262,6 +305,7 @@ func main() {
 		Class string
 		Agree bool
 	}
+
 	//同意するエンドポイント
 	router.POST("/agree", func(ctx *gin.Context) {
 		//json 取得
@@ -297,7 +341,8 @@ func main() {
 
 		//同意済み
 		userObj.Class = json.Class
-		userObj.Is_agreed = json.Agree
+		//常にtrue
+		userObj.Is_agreed = true
 
 		//ユーザーオブジェクト更新
 		err = dbconn.UpdateUser(userObj)
