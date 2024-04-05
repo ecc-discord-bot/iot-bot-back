@@ -72,4 +72,7 @@ func Init() {
 
 	//グローバル変数に設定
 	dbconn = conn
+
+	//スプレットシート初期化
+	SpreadsheetInit()
 }

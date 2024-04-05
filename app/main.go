@@ -3,9 +3,11 @@ package main
 import (
 	"app/auth_grpc"
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -173,7 +175,47 @@ func main() {
 			return
 		}
 
-		_ = data
+		//すでに登録されているか検索する
+		result,err := GetLastRow(data.(auth_grpc.User).ProviderUserId)
+
+		//エラー処理
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//ユーザ取得
+		appuser,err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+
+		//エラー処理
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//登録されていないとき
+		if !result.Isfind {
+			err := WriteUser(fmt.Sprintf("管理シート!B%s", strconv.Itoa(result.Total+3)), User{
+				DiscordID:  data.(auth_grpc.User).ProviderUserId,
+				StudentsID: appuser.Students_id,
+				Name:       appuser.Name,
+				Class:      appuser.Class,
+				IsPaid:     appuser.Is_paid,
+				IsAgreed:   appuser.Is_agreed,
+			})
+
+			//エラー処理
+			if err != nil {
+				ctx.JSON(500, gin.H{
+					"message": "error",
+				})
+				return
+			}
+		}
 
 		//同意画面にリダイレクト
 		ctx.Redirect(301, "/terms")
@@ -354,6 +396,41 @@ func main() {
 			})
 			return
 		}
+
+		//すでに登録されているか検索する
+		result,err := GetLastRow(user.ProviderUserId)
+
+		//エラー処理
+		if err != nil {
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//ユーザ取得
+		appuser := userObj
+
+		//登録されているとき
+		if result.Isfind {
+			err := WriteUser(fmt.Sprintf("管理シート!B%s", strconv.Itoa(result.Index+3)), User{
+				DiscordID:  user.ProviderUserId,
+				StudentsID: appuser.Students_id,
+				Name:       appuser.Name,
+				Class:      appuser.Class,
+				IsPaid:     appuser.Is_paid,
+				IsAgreed:   appuser.Is_agreed,
+			})
+
+			//エラー処理
+			if err != nil {
+				ctx.JSON(500, gin.H{
+					"message": "error",
+				})
+				return
+			}
+		}
+
 
 		ctx.JSON(200, gin.H{
 			"message": "success",
