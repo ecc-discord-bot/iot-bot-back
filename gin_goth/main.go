@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha512"
+	"errors"
 	"fmt"
 
 	"log"
@@ -482,10 +483,15 @@ func get_redirect_url(ctx *gin.Context) string {
 
 // リダイレクトURL設定
 func set_redirect_url(ctx *gin.Context) (string, error) {
-	session := sessions.Default(ctx)
-
 	//パラメータから取得
 	redirect_url := ctx.DefaultQuery("redirect_url", "/")
+
+	//リダイレクトURL検証
+	if redirect_url != os.Getenv("Redirect_URL") {
+		return "/", errors.New("invalid redirect_url")
+	}
+
+	session := sessions.Default(ctx)
 
 	//設定
 	session.Set("redirect_url", redirect_url)
