@@ -23,3 +23,5 @@ server.key
 gin_goth/config.json
 
 /app/test
+
+google_cred.json
