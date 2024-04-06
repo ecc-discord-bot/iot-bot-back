@@ -24,4 +24,9 @@ gin_goth/config.json
 
 /app/test
 
-google_cred.json
+/app/google_cred.json
+
+/gin_goth/auth_grpc/keys/*
+
+!/gin_goth/auth_grpc/keys/certificate.conf
+gin_goth/server.csr

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"gin_oauth/auth"
-	"gin_oauth/auth_grpc"
 	"gin_oauth/transaction"
 
 	"github.com/gin-gonic/gin"
@@ -105,9 +104,6 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	//TODO デバッグ用
-	auth_grpc.Init("localhost:9000")
-
 	//ストア設定
 	store := gormstore.New(dbconn, []byte(key))
 	store.MaxAge(31536000)
@@ -155,27 +151,6 @@ func main() {
 
 	//テストエンドポイント
 	router.GET("/", func(ctx *gin.Context) {
-		//トークン取得
-		token := ctx.DefaultQuery("token","")
-
-		//トークン取得
-		if token == "" {
-			ctx.JSON(http.StatusOK, gin.H{"message": "トークンないは"})
-			return
-		}
-
-		//トークン取得
-		token,err := auth_grpc.GetToken(token, os.Getenv("ClientSecret"))
-
-		//エラー処理
-		if err != nil {
-			log.Println(err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-			return
-		}
-
-		log.Println(token)
-
 		ctx.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
 	})
 
@@ -300,7 +275,7 @@ func main() {
 		UserAgent := ctx.GetHeader("User-Agent")
 
 		//トークン生成
-		token, err := auth.GenToken(hash_data_str, UserAgent,"")
+		token, err := auth.GenToken(hash_data_str, UserAgent, "")
 
 		//エラー処理
 		if err != nil {
@@ -309,7 +284,7 @@ func main() {
 		}
 
 		//引き換え用トークン生成
-		tokendata,err := transaction.GenToken()
+		tokendata, err := transaction.GenToken()
 
 		//エラー処理
 		if err != nil {
@@ -318,7 +293,7 @@ func main() {
 		}
 
 		//トークン保存 (5分間有効)
-		err = transaction.Save(tokendata.Tokenid, time.Minute * 5, token)
+		err = transaction.Save(tokendata.Tokenid, time.Minute*5, token)
 
 		//エラー処理
 		if err != nil {
@@ -327,7 +302,7 @@ func main() {
 		}
 
 		//リダイレクト
-		ctx.Redirect(303, get_redirect_url(ctx) + "?token=" + tokendata.Token)
+		ctx.Redirect(303, get_redirect_url(ctx)+"?token="+tokendata.Token)
 	})
 
 	router.POST("/disable_session", func(ctx *gin.Context) {
@@ -427,7 +402,7 @@ func main() {
 		ctx.JSON(200, gin.H{"sessions": results})
 	})
 
-	router.RunTLS(":3011", "./keys/server.crt", "./keys/server.key")
+	router.Run("0.0.0.0:3011")
 
 }
 
@@ -506,4 +481,3 @@ func set_redirect_url(ctx *gin.Context) (string, error) {
 
 	return redirect_url, nil
 }
-

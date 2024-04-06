@@ -3,10 +3,12 @@ package auth_grpc
 import (
 	"errors"
 	"log"
+	"os"
 
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -17,7 +19,14 @@ var (
 
 func Init(ServerUrl string) error {
 	// 9000番ポートでクライアントからのリクエストを受け付けるようにする
-	dial_conn, err := grpc.Dial(ServerUrl, grpc.WithInsecure())
+	creds, err := credentials.NewClientTLSFromFile(os.Getenv("TLS_CRT"), "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//サーバーとの接続
+	dial_conn, err := grpc.Dial(ServerUrl, grpc.WithTransportCredentials(creds))
+
 	if err != nil {
 		log.Printf("did not connect: %s \n", err)
 		return err
@@ -85,7 +94,7 @@ func GetToken(token string, secret string) (string, error) {
 	return response.Token, nil
 }
 
-//ログアウト
+// ログアウト
 func Logout(token string) error {
 	//初期化されているか
 	if !isinit {
@@ -93,7 +102,7 @@ func Logout(token string) error {
 	}
 
 	//トークンを無効化する
-	result,err := client.Logout(context.Background(), &AuthToken{Token: token})
+	result, err := client.Logout(context.Background(), &AuthToken{Token: token})
 
 	//エラー処理
 	if err != nil {
@@ -108,18 +117,18 @@ func Logout(token string) error {
 	}
 
 	return nil
-}	
+}
 
-//トークンを更新する
-func Refresh(token string,UserAgent string) (string, error) {
+// トークンを更新する
+func Refresh(token string, UserAgent string) (string, error) {
 	//初期化されているか
 	if !isinit {
 		return "", errors.New("not init")
 	}
 
 	//トークン取得
-	response, err := client.Refresh(context.Background(),&AuthToken{
-		Token: token,
+	response, err := client.Refresh(context.Background(), &AuthToken{
+		Token:     token,
 		UserAgent: UserAgent,
 	})
 
@@ -137,7 +146,7 @@ func Refresh(token string,UserAgent string) (string, error) {
 	return response.Token, nil
 }
 
-//トークンを更新する
+// トークンを更新する
 func Submit_Refresh(token string) error {
 	//初期化されているか
 	if !isinit {
@@ -145,7 +154,7 @@ func Submit_Refresh(token string) error {
 	}
 
 	//トークン取得
-	response, err := client.Submit(context.Background(),&AuthToken{
+	response, err := client.Submit(context.Background(), &AuthToken{
 		Token: token,
 	})
 

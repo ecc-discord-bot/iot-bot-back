@@ -29,22 +29,9 @@ func main() {
 
 	router := gin.Default()
 
-	//TODO デバック用
-	router.LoadHTMLGlob("templates/*")
-
 	//セッション初期化
 	session_store := gin_cookie.NewStore([]byte(key))
 	router.Use(gin_sessions.Sessions("csrf_session", session_store))
-
-	/*
-	router.Use(gin_csrf.Middleware(gin_csrf.Options{
-		Secret: key,
-		ErrorFunc: func(ctx *gin.Context) {
-			ctx.String(400, "CSRF token mismatch")
-			ctx.Abort()
-		},
-	}))
-	*/
 
 	//ここまで
 

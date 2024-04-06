@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"gin_oauth/auth"
 )
@@ -23,8 +24,16 @@ func start_grpc() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	//サーバー証明書
+	cred,err := credentials.NewServerTLSFromFile("./auth_grpc/keys/server.crt","./auth_grpc/keys/server.key")
+
+	//エラー処理
+	if err != nil {
+		log.Fatalf("failed to load credentials: %v", err)
+	}
+
 	//GRPCサーバ
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.Creds(cred))
 
 	// Auth構造体のアドレスを渡すことで、クライアントからGetDataリクエストされると
 	// GetDataメソッドが呼ばれるようになる
