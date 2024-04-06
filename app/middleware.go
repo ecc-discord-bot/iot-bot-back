@@ -12,7 +12,7 @@ var (
 
 func Middleware_Init() error {
 	//grpcの初期化
-	err := auth_grpc.Init("auth_Server:9000")
+	err := auth_grpc.Init("127.0.0.1:9000")
 
 	//エラー処理
 	if err != nil {

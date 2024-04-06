@@ -60,6 +60,8 @@ func Outlook(ctx *gin.Context) {
 			Class: "",
 			Is_agreed: false,
 			Is_paid: false,
+			Signature: "",
+			NowTime: 0,
 		})
 
 		//エラー処理

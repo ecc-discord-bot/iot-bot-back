@@ -1,0 +1,27 @@
+{
+    "class": {
+        "IE": [
+            "IE1A",
+            "IE1B",
+            "IE2A",
+            "IE2B",
+            "IE3A",
+            "IE3B",
+            "IE4A",
+            "IE4B"
+        ],
+        "SK": [
+            "SK1A",
+            "SK1B",
+            "SK2A",
+            "SK2B",
+            "SK3A",
+            "SK3B"
+        ],
+        "SE": [
+            "SE1A",
+            "SE1B",
+            "SE2A"
+        ]
+    }
+}

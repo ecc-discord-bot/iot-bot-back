@@ -38,6 +38,9 @@ func Init() {
 	//env読み込み
 	loadEnv()
 
+	//キーをセット
+	key = os.Getenv("SESSION_SECRET")
+
 	//データーベース初期化
 	conn,err := db.Init()
 

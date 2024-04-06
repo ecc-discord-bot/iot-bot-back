@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	"google.golang.org/api/option"
 
 	"google.golang.org/api/sheets/v4"
 )
 
-var spreadsheetID = "1dthjcbgF333Pbt-Bu9nENdbJ12ETJLFjybSNYDmkvXo"
+var spreadsheetID = ""
 var service *sheets.Service = nil
 var findstr = "管理シート!B3:B"
 
@@ -22,6 +25,8 @@ func SpreadsheetInit() {
 	}
 
 	service = srv
+
+	spreadsheetID = os.Getenv("SPREADSHEET_ID")
 }
 
 type User struct {
@@ -31,6 +36,8 @@ type User struct {
 	Class      string
 	IsPaid     bool
 	IsAgreed   bool
+	Time       int64
+	Signature  string
 }
 
 func WriteUser(range_str string, data User) error {
@@ -49,15 +56,23 @@ func WriteUser(range_str string, data User) error {
 				data.IsAgreed,
 				//支払い済みか
 				data.IsPaid,
+				//同意時間
+				fmt.Sprintf("=EPOCHTODATE(%s)",strconv.FormatInt(data.Time,10)),
+				//署名
+				data.Signature,
 			},
 		},
 	}
-	_, err := service.Spreadsheets.Values.Update(spreadsheetID, range_str, vr).ValueInputOption("USER_ENTERED").Do()
+
+	//書き込み
+	resp, err := service.Spreadsheets.Values.Update(spreadsheetID, range_str, vr).ValueInputOption("USER_ENTERED").Do()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
+	//ステータスコード
+	log.Println(resp.HTTPStatusCode)
 	return nil
 }
 

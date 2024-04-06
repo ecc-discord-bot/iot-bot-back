@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -163,7 +164,7 @@ func main() {
 		}
 
 		//すでに登録されているか検索する
-		result,err := GetLastRow(data.(auth_grpc.User).ProviderUserId)
+		result, err := GetLastRow(data.(auth_grpc.User).ProviderUserId)
 
 		//エラー処理
 		if err != nil {
@@ -174,16 +175,18 @@ func main() {
 		}
 
 		//ユーザ取得
-		appuser,err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+		appuser, err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
 
 		//エラー処理
 		if err != nil {
+			log.Println(err)
 			ctx.JSON(500, gin.H{
 				"message": "error",
 			})
 			return
 		}
 
+		log.Println(result)
 		//登録されていないとき
 		if !result.Isfind {
 			err := WriteUser(fmt.Sprintf("管理シート!B%s", strconv.Itoa(result.Total+3)), User{
@@ -193,10 +196,13 @@ func main() {
 				Class:      appuser.Class,
 				IsPaid:     appuser.Is_paid,
 				IsAgreed:   appuser.Is_agreed,
+				Time:       appuser.NowTime,
+				Signature:  "",
 			})
 
 			//エラー処理
 			if err != nil {
+				log.Println(err)
 				ctx.JSON(500, gin.H{
 					"message": "error",
 				})
@@ -214,7 +220,7 @@ func main() {
 
 	//ログインエンドポイント
 	router.GET("/login", func(ctx *gin.Context) {
-		ctx.Redirect(301, "/auth/discord?redirect_url=https://127.0.0.1:8443/app/")
+		ctx.Redirect(301, "/auth/discord?redirect_url="+os.Getenv("Redirect_URL"))
 	})
 
 	//ログアウト エンドポイント
@@ -282,7 +288,7 @@ func main() {
 		}
 
 		//ユーザー取得
-		user,err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
+		user, err := dbconn.GetUser(data.(auth_grpc.User).ProviderUserId)
 
 		//エラー処理
 		if err != nil {
@@ -293,10 +299,9 @@ func main() {
 			return
 		}
 
-		log.Println(user)
 		ctx.JSON(200, gin.H{
 			"message": "ok",
-			"user": user,
+			"user":    user,
 		})
 	})
 
@@ -331,8 +336,9 @@ func main() {
 	})
 
 	type AgreeData struct {
-		Class string
-		Agree bool
+		Class     string
+		Agree     bool
+		Signature string
 	}
 
 	//同意するエンドポイント
@@ -354,6 +360,14 @@ func main() {
 			return
 		}
 
+		//データ検証
+		if json.Signature == "" {
+			ctx.JSON(400, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
 		//ユーザ取得
 		user := ctx.MustGet("user").(auth_grpc.User)
 
@@ -368,10 +382,21 @@ func main() {
 			return
 		}
 
+		//同意した時刻を取得する
+		if !userObj.Is_agreed {
+			//同意した時刻を取得
+			now_time := time.Now()
+
+			//現在時刻を設定
+			userObj.NowTime = now_time.Unix()
+		}
+
 		//同意済み
 		userObj.Class = json.Class
 		//常にtrue
 		userObj.Is_agreed = true
+
+		userObj.Signature = json.Signature
 
 		//ユーザーオブジェクト更新
 		err = dbconn.UpdateUser(userObj)
@@ -385,7 +410,7 @@ func main() {
 		}
 
 		//すでに登録されているか検索する
-		result,err := GetLastRow(user.ProviderUserId)
+		result, err := GetLastRow(user.ProviderUserId)
 
 		//エラー処理
 		if err != nil {
@@ -407,6 +432,8 @@ func main() {
 				Class:      appuser.Class,
 				IsPaid:     appuser.Is_paid,
 				IsAgreed:   appuser.Is_agreed,
+				Time:       appuser.NowTime,
+				Signature:  appuser.Signature,
 			})
 
 			//エラー処理
@@ -417,7 +444,6 @@ func main() {
 				return
 			}
 		}
-
 
 		ctx.JSON(200, gin.H{
 			"message": "success",
