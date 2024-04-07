@@ -16,6 +16,7 @@ import (
 
 	gin_sessions "github.com/gin-contrib/sessions"
 	gin_cookie "github.com/gin-contrib/sessions/cookie"
+	nocache "github.com/alexander-melentyev/gin-nocache"
 	//gin_csrf "github.com/utrack/gin-csrf"
 )
 
@@ -28,7 +29,16 @@ func main() {
 	//初期化
 	Init()
 
+	//タイムゾーン
+	jst, err := time.LoadLocation("Asia/Tokyo")
+    if err != nil {
+        panic(err)
+    }
+
+	//ルーター
 	router := gin.Default()
+	//キャッシュ無効化
+	router.Use(nocache.NoCache())
 
 	//セッション初期化
 	session_store := gin_cookie.NewStore([]byte(key))
@@ -368,6 +378,14 @@ func main() {
 			return
 		}
 
+		//同意しているか
+		if !json.Agree {
+			ctx.JSON(400, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
 		//ユーザ取得
 		user := ctx.MustGet("user").(auth_grpc.User)
 
@@ -384,8 +402,8 @@ func main() {
 
 		//同意した時刻を取得する
 		if !userObj.Is_agreed {
-			//同意した時刻を取得
-			now_time := time.Now()
+			//同意した時刻を取得 (日本時刻)
+			now_time := time.Now().In(jst)
 
 			//現在時刻を設定
 			userObj.NowTime = now_time.Unix()
