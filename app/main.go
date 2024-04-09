@@ -14,9 +14,9 @@ import (
 
 	"github.com/markbates/goth/gothic"
 
+	nocache "github.com/alexander-melentyev/gin-nocache"
 	gin_sessions "github.com/gin-contrib/sessions"
 	gin_cookie "github.com/gin-contrib/sessions/cookie"
-	nocache "github.com/alexander-melentyev/gin-nocache"
 	//gin_csrf "github.com/utrack/gin-csrf"
 )
 
@@ -79,6 +79,36 @@ func main() {
 		ctx.SetCookie("token", result, 2592000, "/", "", true, true)
 
 		ctx.Redirect(301, "/app/bind")
+	})
+
+	//スプレッドシートと同期するエンドポイント
+	type SyncRequest struct {
+		Mode string
+	}
+	router.POST("/sync", func(ctx *gin.Context) {
+		//同期オプション
+		var option SyncRequest
+
+		//バインド
+		err := ctx.BindJSON(&option)
+
+		//エラー処理
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(500, gin.H{
+				"message": "error",
+			})
+			return
+		}
+
+		//同期オプションを取得
+		if option.Mode == "sync_clsss" {
+			SyncClass()
+		}
+		
+		ctx.JSON(200, gin.H{
+			"message": "sync",
+		})
 	})
 
 	//トークン更新用エンドポイント
