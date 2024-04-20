@@ -1,6 +1,7 @@
 version: '3'
+name: iot_bot_back
 services:
-    app:
+    iot_app:
         container_name: app
         image: golang:1.20.13-bullseye
         build: ./app
@@ -10,10 +11,10 @@ services:
         tty: true
         restart: always
         depends_on:
-            - redis
+            - iot_redis
         
 
-    gin_goth:
+    iot_gin_goth:
         container_name: auth_Server
         image: golang:1.20.13-bullseye
         build: ./gin_goth
@@ -22,16 +23,16 @@ services:
         tty: true
         restart: always
         depends_on:
-            - redis
+            - iot_redis
 
-    redis:
+    iot_redis:
         container_name: redis
         image: "redis:latest"
         ports:
             - "6379:6379"
         restart: always
 
-    nginx:
+    iot_nginx:
         restart: always
         image: nginx:latest
         container_name: nginx
@@ -46,7 +47,7 @@ services:
         extra_hosts:
             - host.docker.internal:host-gateway
             
-    mysql:
+    iot_mysql:
         container_name: mysql
         image: mysql:8.3
         environment:

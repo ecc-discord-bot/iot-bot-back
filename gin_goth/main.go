@@ -1,6 +1,7 @@
 package main
 
 import (
+	//標準
 	"context"
 	"crypto/sha512"
 	"errors"
@@ -12,54 +13,66 @@ import (
 	"time"
 
 	"gin_oauth/auth"
+	"gin_oauth/auth_grpc"
 	"gin_oauth/transaction"
 
+	//サーバーライブラリ
 	"github.com/gin-gonic/gin"
+
+	//データーベースドライバ
 	"gorm.io/driver/sqlite"
+
+	//データーベースライブラリ
 	"gorm.io/gorm"
 
+	//シングルサインオン (SSO)
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 
+	//環境変数読み込み
 	"github.com/joho/godotenv"
 
+	//Discord 認証用
 	"github.com/markbates/goth/providers/discord"
 
-	/*
-		"github.com/markbates/goth/providers/github"
-		"github.com/markbates/goth/providers/google"
-		"github.com/markbates/goth/providers/line"
-		"github.com/markbates/goth/providers/microsoftonline"
-	*/
-
+	//分からない
 	"github.com/wader/gormstore/v2"
 
+	//認証セッション用
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 
+	//ユーザーエージェント
 	"github.com/mileusna/useragent"
 )
 
+//プロバイダ取得
 func contextWithProviderName(ctx *gin.Context, provider string) *http.Request {
+	//オプションからプロバイダを取得する
 	return ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), "provider", provider))
 }
 
+//env ファイル読み込み
 func loadEnv() {
+
 	err := godotenv.Load(".env")
 
-	// もし err がnilではないなら、"読み込み出来ませんでした"が出力されます。
+	//エラー処理
 	if err != nil {
 		fmt.Printf("読み込み出来ませんでした: %v", err)
 	}
 }
 
 var (
-	//有効期限
+	//トークンの有効期限
 	exp_time = 31536000
+
+	//ドメイン
 	domain   = ""
 )
 
 func main() {
+	//環境変数読み込み
 	loadEnv()
 
 	//認証初期化
@@ -67,7 +80,8 @@ func main() {
 
 	//エラー処理
 	if err != nil {
-		panic("failed to connect database")
+		//初期化失敗時
+		panic("failed to init auth")
 	}
 
 	//トランザクション初期化
@@ -76,24 +90,25 @@ func main() {
 
 	//エラー処理
 	if err != nil {
+		//初期化失敗時
 		panic("failed to int transaction")
 	}
 
 	//JWT鍵設定
 	jwt_secret := os.Getenv("JWT_SECRET")
 
-	//鍵がない場合
+	//JWTの鍵がない場合
 	if jwt_secret == "" {
 		panic("No JWT_SECRET environment variable set")
 	}
 
-	//JWT鍵設定
+	//JWTの鍵設定
 	auth.Secret = []byte(jwt_secret)
 
 	//セッション鍵
 	key := os.Getenv("SESSION_SECRET") // Replace with your SESSION_SECRET or similar
 
-	//鍵がない場合
+	//セッション鍵がない場合
 	if key == "" {
 		panic("No SESSION_SECRET environment variable set")
 	}
@@ -111,8 +126,10 @@ func main() {
 	store.SessionOpts.HttpOnly = true
 	store.SessionOpts.SameSite = http.SameSiteLaxMode
 
-	//クリーンアップ
+	//トークンクリーンアップ
 	quit := make(chan struct{})
+
+	//１時間毎に起動する
 	go store.PeriodicCleanup(1*time.Hour, quit)
 
 	//ストアを設定する
@@ -136,24 +153,49 @@ func main() {
 	//セッション設定
 	session_store := cookie.NewStore([]byte(key))
 	session_store.Options(sessions.Options{
-		MaxAge:   exp_time,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-		Domain:   domain,
+		MaxAge:   exp_time,					//有効期限
+		Secure:   true,						//HTTPSだけ
+		HttpOnly: true,						//JSからアクセス禁止
+		SameSite: http.SameSiteLaxMode,		//おまじない
+		Path:     "/",						//パス
+		Domain:   domain,					//ドメイン
 	})
 
+	//認証用セッション設定
 	router.Use(sessions.Sessions("AuthSession", session_store))
 
-	//ミドルウェア設定
+	//認証用ミドルウェア設定
 	router.Use(auth.Middleware())
 
 	//テストエンドポイント
 	router.GET("/", func(ctx *gin.Context) {
+		//認証トークン取得
+		token := ctx.DefaultQuery("token","")
+
+		//トークンが存在するか
+		if token == "" {
+			ctx.JSON(http.StatusOK, gin.H{"message": "トークンないは"})
+			return
+		}
+
+		//トークン引き換え
+		token,err := auth_grpc.GetToken(token, os.Getenv("ClientSecret"))
+
+		//引き換え失敗時
+		if err != nil {
+			log.Println(err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		//トークン出力
+		log.Println(token)
+
+		//トークンを返す
 		ctx.JSON(http.StatusOK, gin.H{"message": "Hello, World!"})
 	})
 
+	//プロバイダ認証
 	router.GET("/:provider", func(ctx *gin.Context) {
 		_, err := set_redirect_url(ctx)
 
@@ -168,7 +210,6 @@ func main() {
 
 		//認証済みか
 		if authed.(bool) {
-			//認証されていたら
 			//ログアウト処理
 			err := Logout(ctx)
 
@@ -179,10 +220,11 @@ func main() {
 			}
 		}
 
+		//プロバイダ取得
 		provider := ctx.Param("provider")
 		ctx.Request = contextWithProviderName(ctx, provider)
 
-		//認証
+		//認証開始
 		gothic.BeginAuthHandler(ctx.Writer, ctx.Request)
 	})
 
